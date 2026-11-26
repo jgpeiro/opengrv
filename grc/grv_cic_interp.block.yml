@@ -1,0 +1,47 @@
+id: grv_cic_interp
+label: 'CIC Interpolator'
+category: '[OpenGRV]'
+flags: [ python ]
+
+parameters:
+-   id: type
+    label: 'Type'
+    dtype: enum
+    default: 'float'
+    options: [complex, float]
+    option_attributes:
+        fcn: [c, f]
+        cic: [ccf, fff]
+        size: [gr.sizeof_gr_complex, gr.sizeof_float]
+    hide: part
+-   id: stages
+    label: 'Stages N'
+    dtype: int
+    default: '3'
+-   id: ratio
+    label: 'Ratio R'
+    dtype: int
+    default: '8'
+-   id: diff_delay
+    label: 'Differential delay M'
+    dtype: int
+    default: '1'
+
+inputs:
+-   domain: stream
+    dtype: ${ type }
+
+outputs:
+-   domain: stream
+    dtype: ${ type }
+
+templates:
+    imports: |-
+        from gnuradio import blocks, filter, gr
+        import numpy, functools, math
+    make: filter.interp_fir_filter_${type.cic}(${ratio}, list(functools.reduce(numpy.convolve, [numpy.ones(${ratio} * ${diff_delay})] * ${stages}) / 2.0 ** math.ceil(math.log2((${ratio} * ${diff_delay}) ** ${stages} / ${ratio}))))
+
+documentation: |-
+    CIC interpolator (OpenGRV). In GNU Radio it is the equivalent interpolating FIR filter.
+
+file_format: 1

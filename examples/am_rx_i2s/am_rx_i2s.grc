@@ -1,0 +1,120 @@
+options:
+  parameters: {id: am_rx_i2s, generate_options: no_gui, output_language: python, title: AM receiver with I2S audio, description: 'An AM receiver for a complex ADC at 1.92 MS/s: channel selection with a
+      frequency-translating FIR, a second filter to 48 kS/s, envelope detection, DC removal and AGC; the audio goes to an I2S DAC (both channels) and the CPU reads the signal level from a probe.', author: OpenGRV
+      examples}
+  states:
+    state: enabled
+    coordinate: [16, 12]
+    rotation: 0
+blocks:
+- name: samp_rate
+  id: variable
+  parameters: {value: '1920000.0', comment: ''}
+  states:
+    state: enabled
+    coordinate: [200, 12]
+    rotation: 0
+- name: tune
+  id: variable_qtgui_range
+  parameters: {value: '0', comment: '', start: '-400000.0', stop: '400000.0', step: '1000.0', label: Tuning (Hz), rangeType: float, widget: counter_slider, orient: QtCore.Qt.Horizontal, min_len: '200',
+    gui_hint: ''}
+  states:
+    state: enabled
+    coordinate: [354, 12]
+    rotation: 0
+- name: volume
+  id: variable_qtgui_range
+  parameters: {value: '1', comment: '', start: '0', stop: '2', step: '0.05', label: Volume, rangeType: float, widget: counter_slider, orient: QtCore.Qt.Horizontal, min_len: '200', gui_hint: ''}
+  states:
+    state: enabled
+    coordinate: [508, 12]
+    rotation: 0
+- name: adc_iq
+  id: pad_source
+  parameters: {type: complex, label: adc_iq, num_streams: '1', vlen: '1', optional: 'False', comment: '@grv rate=samp_rate'}
+  states:
+    state: enabled
+    coordinate: [16, 172]
+    rotation: 0
+- name: xlate
+  id: freq_xlating_fir_filter_xxx
+  parameters: {type: ccf, decim: '8', center_freq: tune, samp_rate: samp_rate, taps: 'firdes.low_pass(1, samp_rate, 20e3, 40e3)', comment: ''}
+  states:
+    state: enabled
+    coordinate: [230, 157]
+    rotation: 0
+- name: chan
+  id: low_pass_filter
+  parameters: {type: fir_filter_ccf, decim: '5', interp: '1', gain: '1', samp_rate: samp_rate / 8, cutoff_freq: '5000.0', width: '3000.0', win: window.WIN_HAMMING, beta: '6.76', comment: ''}
+  states:
+    state: enabled
+    coordinate: [577.6, 157]
+    rotation: 0
+- name: env
+  id: blocks_complex_to_mag
+  parameters: {vlen: '1', comment: ''}
+  states:
+    state: enabled
+    coordinate: [801.6, 180]
+    rotation: 0
+- name: dcb
+  id: dc_blocker_xx
+  parameters: {type: ff, length: '64', long_form: 'False', comment: ''}
+  states:
+    state: enabled
+    coordinate: [1033.2, 172]
+    rotation: 0
+- name: agc
+  id: analog_agc_xx
+  parameters: {type: float, rate: '0.001', reference: '0.3', gain: '1', max_gain: '200', comment: ''}
+  states:
+    state: enabled
+    coordinate: [1310.4, 165]
+    rotation: 0
+- name: vol
+  id: blocks_multiply_const_vxx
+  parameters: {type: float, const: volume, vlen: '1', comment: ''}
+  states:
+    state: enabled
+    coordinate: [1524.4, 172]
+    rotation: 0
+- name: audio
+  id: grv_i2s_sink
+  parameters: {type: float, role: master, samp_rate: '48000.0', slot_bits: '32', data_bits: '16', format: i2s, duplicate: 'True', drop: 'True', repeat: 'True', comment: ''}
+  states:
+    state: enabled
+    coordinate: [1740.8000000000002, 150]
+    rotation: 0
+- name: pwr
+  id: blocks_complex_to_mag_squared
+  parameters: {vlen: '1', comment: ''}
+  states:
+    state: enabled
+    coordinate: [801.6, 319]
+    rotation: 0
+- name: avg
+  id: single_pole_iir_filter_xx
+  parameters: {type: float, alpha: '0.01', vlen: '1', comment: ''}
+  states:
+    state: enabled
+    coordinate: [1033.2, 311]
+    rotation: 0
+- name: level
+  id: blocks_probe_signal_x
+  parameters: {type: float, comment: ''}
+  states:
+    state: enabled
+    coordinate: [1310.4, 319]
+    rotation: 0
+connections:
+- [adc_iq, '0', xlate, '0']
+- [xlate, '0', chan, '0']
+- [chan, '0', env, '0']
+- [env, '0', dcb, '0']
+- [dcb, '0', agc, '0']
+- [agc, '0', vol, '0']
+- [vol, '0', audio, '0']
+- [chan, '0', pwr, '0']
+- [pwr, '0', avg, '0']
+- [avg, '0', level, '0']
+metadata: {file_format: 1}

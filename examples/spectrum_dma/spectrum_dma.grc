@@ -1,0 +1,79 @@
+options:
+  parameters: {id: spectrum_dma, generate_options: no_gui, output_language: python, title: Spectrum analyser with DMA, description: 'A 256-point spectrum analyser: one frame in eight of the ADC stream goes
+      through a windowed FFT and a magnitude-squared stage, and a DMA channel writes the power spectra into a ring of buffers in RAM, one frame per buffer, without the CPU.', author: OpenGRV examples}
+  states:
+    state: enabled
+    coordinate: [16, 12]
+    rotation: 0
+blocks:
+- name: samp_rate
+  id: variable
+  parameters: {value: '1920000.0', comment: ''}
+  states:
+    state: enabled
+    coordinate: [200, 12]
+    rotation: 0
+- name: nfft
+  id: variable
+  parameters: {value: '256', comment: ''}
+  states:
+    state: enabled
+    coordinate: [354, 12]
+    rotation: 0
+- name: adc_iq
+  id: pad_source
+  parameters: {type: complex, label: adc_iq, num_streams: '1', vlen: '1', optional: 'False', comment: '@grv rate=samp_rate'}
+  states:
+    state: enabled
+    coordinate: [16, 157]
+    rotation: 0
+- name: frames
+  id: blocks_keep_m_in_n
+  parameters: {type: complex, m: nfft, n: 8 * nfft, offset: '0', vlen: '1', comment: ''}
+  states:
+    state: enabled
+    coordinate: [230, 150]
+    rotation: 0
+- name: s2v
+  id: blocks_stream_to_vector
+  parameters: {type: complex, num_items: nfft, vlen: '1', comment: ''}
+  states:
+    state: enabled
+    coordinate: [444, 157]
+    rotation: 0
+- name: fft
+  id: fft_vxx
+  parameters: {type: complex, fft_size: nfft, forward: 'True', window: window.blackmanharris(nfft), shift: 'True', nthreads: '1', comment: ''}
+  states:
+    state: enabled
+    coordinate: [675.6, 150]
+    rotation: 0
+- name: v2s
+  id: blocks_vector_to_stream
+  parameters: {type: complex, num_items: nfft, vlen: '1', comment: ''}
+  states:
+    state: enabled
+    coordinate: [970.4, 157]
+    rotation: 0
+- name: power
+  id: blocks_complex_to_mag_squared
+  parameters: {vlen: '1', comment: ''}
+  states:
+    state: enabled
+    coordinate: [1202.0, 165]
+    rotation: 0
+- name: spectra
+  id: grv_dma_sink
+  parameters: {type: float, mode: desc, burst: '4', eof_last: 'False', drop: 'True', comment: ''}
+  states:
+    state: enabled
+    coordinate: [1433.6, 150]
+    rotation: 0
+connections:
+- [adc_iq, '0', frames, '0']
+- [frames, '0', s2v, '0']
+- [s2v, '0', fft, '0']
+- [fft, '0', v2s, '0']
+- [v2s, '0', power, '0']
+- [power, '0', spectra, '0']
+metadata: {file_format: 1}

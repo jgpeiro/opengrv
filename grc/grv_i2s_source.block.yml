@@ -1,0 +1,95 @@
+id: grv_i2s_source
+label: 'I2S Source'
+category: '[OpenGRV]/Peripheral endpoints'
+flags: [ python ]
+
+parameters:
+-   id: type
+    label: 'Type'
+    dtype: enum
+    default: 'complex'
+    options: [complex, float, int, short]
+    option_labels: ['Complex (stereo)', 'Float (mono)', 'Int (mono)', 'Short (mono)']
+    option_attributes:
+        size: [gr.sizeof_gr_complex, gr.sizeof_float, gr.sizeof_int, gr.sizeof_short]
+    hide: part
+-   id: role
+    label: 'Role'
+    dtype: enum
+    default: 'master'
+    options: [master, slave]
+    option_labels: ['Master', 'Slave']
+-   id: samp_rate
+    label: 'Sample rate'
+    dtype: real
+    default: '48000'
+-   id: slot_bits
+    label: 'Slot bits'
+    dtype: int
+    default: '32'
+    options: [16, 24, 32]
+-   id: data_bits
+    label: 'Data bits'
+    dtype: int
+    default: '16'
+-   id: format
+    label: 'Format'
+    dtype: enum
+    default: 'i2s'
+    options: [i2s, left, right]
+    option_labels: ['I2S (Philips)', 'Left-justified', 'Right-justified']
+-   id: channel
+    label: 'Mono channel'
+    dtype: enum
+    default: 'left'
+    options: [left, right]
+    option_labels: ['Left', 'Right']
+    hide: part
+-   id: mclk
+    label: 'MCLK output (Hz, 0: none)'
+    dtype: real
+    default: '0'
+    hide: part
+-   id: ws_invert
+    label: 'Inverted WS'
+    dtype: bool
+    default: 'False'
+    hide: part
+    category: 'Advanced'
+-   id: depth
+    label: 'FIFO depth'
+    dtype: int
+    default: '32'
+    hide: part
+    category: 'Advanced'
+-   id: sim_file
+    label: 'Simulation file'
+    dtype: file_open
+    default: ''
+    hide: part
+    category: 'Simulation'
+-   id: repeat_sim
+    label: 'Repeat file'
+    dtype: bool
+    default: 'False'
+    hide: part
+    category: 'Simulation'
+
+outputs:
+-   domain: stream
+    dtype: ${ type }
+
+templates:
+    imports: |-
+        from gnuradio import blocks, gr
+    make: |-
+        blocks.file_source(${type.size}, ${sim_file}, ${repeat_sim}) if ${sim_file} else blocks.null_source(${type.size})
+
+documentation: |-
+    Peripheral endpoint (OpenGRV): samples from an I2S ADC or codec. A complex stream is stereo (I = left,
+    Q = right), a real stream one channel. Master: the FPGA drives <name>_bclk, <name>_ws (and <name>_mclk),
+    bclk = 2 x slot bits x sample rate, at most clk / 8; the input is a rate anchor at samp_rate. Slave: the
+    codec drives the clocks and the endpoint locks on the first ws edge. Float and complex streams have the
+    format s<data_bits>.<data_bits - 1>. In GNU Radio the block reads the simulation file.
+
+file_format: 1

@@ -1,0 +1,70 @@
+options:
+  parameters: {id: siggen_spi_dac, generate_options: no_gui, output_language: python, title: Two-channel signal generator, description: 'A signal generator: a quadrature oscillator with runtime frequency
+      and level drives a dual SPI DAC (sine and cosine on channels A and B) at 100 kS/s, and a sawtooth drives a PWM pin.', author: OpenGRV examples}
+  states:
+    state: enabled
+    coordinate: [16, 12]
+    rotation: 0
+blocks:
+- name: fs
+  id: variable
+  parameters: {value: '100000.0', comment: ''}
+  states:
+    state: enabled
+    coordinate: [200, 12]
+    rotation: 0
+- name: freq
+  id: variable_qtgui_range
+  parameters: {value: '1000', comment: '', start: '10', stop: '20000.0', step: '10', label: Frequency (Hz), rangeType: float, widget: counter_slider, orient: QtCore.Qt.Horizontal, min_len: '200', gui_hint: ''}
+  states:
+    state: enabled
+    coordinate: [354, 12]
+    rotation: 0
+- name: amp
+  id: variable_qtgui_range
+  parameters: {value: '0.5', comment: '', start: '0', stop: '1', step: '0.01', label: Level, rangeType: float, widget: counter_slider, orient: QtCore.Qt.Horizontal, min_len: '200', gui_hint: ''}
+  states:
+    state: enabled
+    coordinate: [508, 12]
+    rotation: 0
+- name: quad
+  id: analog_sig_source_x
+  parameters: {type: complex, samp_rate: fs, waveform: analog.GR_COS_WAVE, freq: freq, amp: '1', offset: '0', phase: '0', comment: ''}
+  states:
+    state: enabled
+    coordinate: [16, 157]
+    rotation: 0
+- name: level
+  id: blocks_multiply_const_vxx
+  parameters: {type: complex, const: amp, vlen: '1', comment: ''}
+  states:
+    state: enabled
+    coordinate: [230, 172]
+    rotation: 0
+- name: dac
+  id: grv_spi_sink
+  parameters: {type: complex, role: master, samp_rate: fs, sclk: '13500000.0', mode: '0', frame_bits: '16', data_pos: '0', data_bits: '12', offset_binary: 'True', cmd: '12288', cmd_q: '45056', repeat: 'True',
+    comment: ''}
+  states:
+    state: enabled
+    coordinate: [446.4, 150]
+    rotation: 0
+- name: saw
+  id: analog_sig_source_x
+  parameters: {type: float, samp_rate: fs, waveform: analog.GR_SAW_WAVE, freq: '200', amp: '1.8', offset: '-0.9', phase: '0', comment: ''}
+  states:
+    state: enabled
+    coordinate: [16, 296]
+    rotation: 0
+- name: pwm
+  id: grv_gpio_sink
+  parameters: {type: float, pins: '1', mode: pwm, data_bits: '8', comment: ''}
+  states:
+    state: enabled
+    coordinate: [230, 304]
+    rotation: 0
+connections:
+- [quad, '0', level, '0']
+- [level, '0', dac, '0']
+- [saw, '0', pwm, '0']
+metadata: {file_format: 1}

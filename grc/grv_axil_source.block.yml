@@ -1,0 +1,39 @@
+id: grv_axil_source
+label: 'AXI4-Lite Source'
+category: '[OpenGRV]'
+flags: [ python ]
+
+parameters:
+-   id: type
+    label: 'Type'
+    dtype: enum
+    default: 'float'
+    options: [complex, float, int, short, byte]
+    option_attributes:
+        fcn: [c, f, i, s, b]
+        cic: [ccf, fff, x, x, x]
+        size: [gr.sizeof_gr_complex, gr.sizeof_float, gr.sizeof_int, gr.sizeof_short, gr.sizeof_char]
+    hide: part
+-   id: depth
+    label: 'FIFO depth'
+    dtype: int
+    default: '512'
+-   id: repeat
+    label: 'Loop mode'
+    dtype: bool
+    default: 'False'
+
+outputs:
+-   domain: stream
+    dtype: ${ type }
+
+templates:
+    imports: |-
+        from gnuradio import blocks, filter, gr
+        import numpy, functools, math
+    make: blocks.vector_source_${type.fcn}([0] * 1024, ${repeat})
+
+documentation: |-
+    Source endpoint: samples written by the CPU through AXI4-Lite (OpenGRV). In GNU Radio it is a vector source of zeros.
+
+file_format: 1

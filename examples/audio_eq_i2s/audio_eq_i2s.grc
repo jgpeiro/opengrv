@@ -1,0 +1,115 @@
+options:
+  parameters: {id: audio_eq_i2s, generate_options: no_gui, output_language: python, title: Stereo three-band equaliser between I2S codecs, description: 'A stereo three-band equaliser: the codec ADC delivers
+      left and right as one complex stream, two one-pole low-pass filters split it into bass, mid and treble, each band has a runtime gain, and the sum goes to the codec DAC. Both I2S ports are masters
+      at 48 kHz.', author: OpenGRV examples}
+  states:
+    state: enabled
+    coordinate: [16, 12]
+    rotation: 0
+blocks:
+- name: bass
+  id: variable_qtgui_range
+  parameters: {value: '1', comment: '', start: '0', stop: '2', step: '0.05', label: Bass, rangeType: float, widget: counter_slider, orient: QtCore.Qt.Horizontal, min_len: '200', gui_hint: ''}
+  states:
+    state: enabled
+    coordinate: [200, 12]
+    rotation: 0
+- name: mid
+  id: variable_qtgui_range
+  parameters: {value: '1', comment: '', start: '0', stop: '2', step: '0.05', label: Mid, rangeType: float, widget: counter_slider, orient: QtCore.Qt.Horizontal, min_len: '200', gui_hint: ''}
+  states:
+    state: enabled
+    coordinate: [354, 12]
+    rotation: 0
+- name: treble
+  id: variable_qtgui_range
+  parameters: {value: '1', comment: '', start: '0', stop: '2', step: '0.05', label: Treble, rangeType: float, widget: counter_slider, orient: QtCore.Qt.Horizontal, min_len: '200', gui_hint: ''}
+  states:
+    state: enabled
+    coordinate: [508, 12]
+    rotation: 0
+- name: codec_in
+  id: grv_i2s_source
+  parameters: {type: complex, role: master, samp_rate: '48000.0', slot_bits: '32', data_bits: '24', format: i2s, comment: ''}
+  states:
+    state: enabled
+    coordinate: [16, 150]
+    rotation: 0
+- name: lp300
+  id: single_pole_iir_filter_xx
+  parameters: {type: complex, alpha: '0.04', vlen: '1', comment: ''}
+  states:
+    state: enabled
+    coordinate: [231.6, 172]
+    rotation: 0
+- name: lp4k
+  id: single_pole_iir_filter_xx
+  parameters: {type: complex, alpha: '0.41', vlen: '1', comment: ''}
+  states:
+    state: enabled
+    coordinate: [231.6, 311]
+    rotation: 0
+- name: treble_band
+  id: blocks_sub_xx
+  parameters: {type: complex, num_inputs: '2', vlen: '1', comment: ''}
+  states:
+    state: enabled
+    coordinate: [508.79999999999995, 313]
+    rotation: 0
+- name: mid_band
+  id: blocks_sub_xx
+  parameters: {type: complex, num_inputs: '2', vlen: '1', comment: ''}
+  states:
+    state: enabled
+    coordinate: [508.79999999999995, 452]
+    rotation: 0
+- name: g_bass
+  id: blocks_multiply_const_vxx
+  parameters: {type: complex, const: bass, vlen: '1', comment: ''}
+  states:
+    state: enabled
+    coordinate: [508.79999999999995, 172]
+    rotation: 0
+- name: g_mid
+  id: blocks_multiply_const_vxx
+  parameters: {type: complex, const: mid, vlen: '1', comment: ''}
+  states:
+    state: enabled
+    coordinate: [725.1999999999999, 450]
+    rotation: 0
+- name: g_treble
+  id: blocks_multiply_const_vxx
+  parameters: {type: complex, const: treble, vlen: '1', comment: ''}
+  states:
+    state: enabled
+    coordinate: [725.1999999999999, 311]
+    rotation: 0
+- name: mix
+  id: blocks_add_xx
+  parameters: {type: complex, num_inputs: '3', vlen: '1', comment: ''}
+  states:
+    state: enabled
+    coordinate: [941.5999999999999, 301]
+    rotation: 0
+- name: codec_out
+  id: grv_i2s_sink
+  parameters: {type: complex, role: master, samp_rate: '48000.0', slot_bits: '32', data_bits: '24', format: i2s, drop: 'True', repeat: 'True', comment: ''}
+  states:
+    state: enabled
+    coordinate: [1155.6, 289]
+    rotation: 0
+connections:
+- [codec_in, '0', lp300, '0']
+- [codec_in, '0', lp4k, '0']
+- [codec_in, '0', treble_band, '0']
+- [lp4k, '0', treble_band, '1']
+- [lp4k, '0', mid_band, '0']
+- [lp300, '0', mid_band, '1']
+- [lp300, '0', g_bass, '0']
+- [mid_band, '0', g_mid, '0']
+- [treble_band, '0', g_treble, '0']
+- [g_bass, '0', mix, '0']
+- [g_mid, '0', mix, '1']
+- [g_treble, '0', mix, '2']
+- [mix, '0', codec_out, '0']
+metadata: {file_format: 1}

@@ -1,0 +1,129 @@
+id: grv_spi_source
+label: 'SPI Source'
+category: '[OpenGRV]/Peripheral endpoints'
+flags: [ python ]
+
+parameters:
+-   id: type
+    label: 'Type'
+    dtype: enum
+    default: 'float'
+    options: [complex, float, int, short, byte]
+    option_attributes:
+        size: [gr.sizeof_gr_complex, gr.sizeof_float, gr.sizeof_int, gr.sizeof_short, gr.sizeof_char]
+    hide: part
+-   id: role
+    label: 'Role'
+    dtype: enum
+    default: 'master'
+    options: [master, slave]
+    option_labels: ['Master', 'Slave']
+-   id: samp_rate
+    label: 'Sample rate'
+    dtype: real
+    default: 'samp_rate'
+-   id: sclk
+    label: 'SCLK (Hz)'
+    dtype: real
+    default: '13.5e6'
+-   id: mode
+    label: 'SPI mode'
+    dtype: int
+    default: '0'
+    options: [0, 1, 2, 3]
+-   id: frame_bits
+    label: 'Frame bits'
+    dtype: int
+    default: '16'
+-   id: data_pos
+    label: 'Data position'
+    dtype: int
+    default: '0'
+-   id: data_bits
+    label: 'Data bits'
+    dtype: int
+    default: '12'
+-   id: offset_binary
+    label: 'Offset binary'
+    dtype: bool
+    default: 'False'
+    hide: part
+-   id: lsb_first
+    label: 'LSB first'
+    dtype: bool
+    default: 'False'
+    hide: part
+    category: 'Advanced'
+-   id: cmd
+    label: 'Command word (I)'
+    dtype: int
+    default: '0'
+    hide: part
+    category: 'Advanced'
+-   id: cmd_q
+    label: 'Command word (Q)'
+    dtype: int
+    default: '0'
+    hide: part
+    category: 'Advanced'
+-   id: cs_setup
+    label: 'CS setup (clocks)'
+    dtype: int
+    default: '1'
+    hide: part
+    category: 'Advanced'
+-   id: cs_hold
+    label: 'CS hold (clocks)'
+    dtype: int
+    default: '1'
+    hide: part
+    category: 'Advanced'
+-   id: cs_gap
+    label: 'CS gap (clocks)'
+    dtype: int
+    default: '1'
+    hide: part
+    category: 'Advanced'
+-   id: sample_delay
+    label: 'MISO sample delay'
+    dtype: int
+    default: '0'
+    hide: part
+    category: 'Advanced'
+-   id: depth
+    label: 'FIFO depth'
+    dtype: int
+    default: '32'
+    hide: part
+    category: 'Advanced'
+-   id: sim_file
+    label: 'Simulation file'
+    dtype: file_open
+    default: ''
+    hide: part
+    category: 'Simulation'
+-   id: repeat_sim
+    label: 'Repeat file'
+    dtype: bool
+    default: 'False'
+    hide: part
+    category: 'Simulation'
+
+outputs:
+-   domain: stream
+    dtype: ${ type }
+
+templates:
+    imports: |-
+        from gnuradio import blocks, gr
+    make: |-
+        blocks.file_source(${type.size}, ${sim_file}, ${repeat_sim}) if ${sim_file} else blocks.null_source(${type.size})
+
+documentation: |-
+    Peripheral endpoint (OpenGRV): samples from an SPI device (master: one frame per component on every
+    sample period, e.g. an ADC) or from an SPI master (slave: one component per frame bits while cs_n is
+    low; each chip-select frame becomes a vector). The sample is the field of data_bits bits at data_pos
+    of the frame; float and complex streams get the format s<data_bits>.<data_bits - 1>.
+    In GNU Radio the block reads the simulation file.
+
+file_format: 1

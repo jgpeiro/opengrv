@@ -1,0 +1,97 @@
+options:
+  parameters: {id: level_meter_spi, generate_options: no_gui, output_language: python, title: 'Level meter: SPI ADC, LED and UART log', description: 'An audio level meter: a 12-bit SPI ADC samples at 200
+      kS/s, DC is removed, the rectified signal is averaged over 1 ms and read 1000 times per second. The level drives an alarm LED through a threshold with hysteresis, is logged as text on a UART and is
+      readable from a probe.', author: OpenGRV examples}
+  states:
+    state: enabled
+    coordinate: [16, 12]
+    rotation: 0
+blocks:
+- name: fs
+  id: variable
+  parameters: {value: '200000.0', comment: ''}
+  states:
+    state: enabled
+    coordinate: [200, 12]
+    rotation: 0
+- name: adc
+  id: grv_spi_source
+  parameters: {type: float, role: master, samp_rate: fs, sclk: '13500000.0', mode: '0', frame_bits: '16', data_pos: '1', data_bits: '12', offset_binary: 'True', comment: ''}
+  states:
+    state: enabled
+    coordinate: [16, 150]
+    rotation: 0
+- name: dcb
+  id: dc_blocker_xx
+  parameters: {type: ff, length: '32', long_form: 'False', comment: ''}
+  states:
+    state: enabled
+    coordinate: [230, 172]
+    rotation: 0
+- name: rect
+  id: blocks_abs_xx
+  parameters: {type: float, vlen: '1', comment: ''}
+  states:
+    state: enabled
+    coordinate: [444, 180]
+    rotation: 0
+- name: mean
+  id: blocks_moving_average_xx
+  parameters: {type: float, length: '200', scale: '0.005', max_iter: '4000', vlen: '1', comment: ''}
+  states:
+    state: enabled
+    coordinate: [658, 165]
+    rotation: 0
+- name: every_1ms
+  id: blocks_keep_one_in_n
+  parameters: {type: float, n: '200', vlen: '1', comment: ''}
+  states:
+    state: enabled
+    coordinate: [874.4, 172]
+    rotation: 0
+- name: alarm
+  id: blocks_threshold_ff
+  parameters: {low: '0.2', high: '0.3', init: '0', comment: ''}
+  states:
+    state: enabled
+    coordinate: [1088.4, 165]
+    rotation: 0
+- name: to_led
+  id: blocks_float_to_uchar
+  parameters: {vlen: '1', scale: '1', bias: '0', comment: ''}
+  states:
+    state: enabled
+    coordinate: [1302.4, 180]
+    rotation: 0
+- name: led
+  id: grv_gpio_sink
+  parameters: {type: byte, pins: '1', mode: parallel, comment: ''}
+  states:
+    state: enabled
+    coordinate: [1518.8000000000002, 165]
+    rotation: 0
+- name: log
+  id: grv_uart_sink
+  parameters: {type: float, baud: '115200', text: 'True', drop: 'True', comment: ''}
+  states:
+    state: enabled
+    coordinate: [1088.4, 304]
+    rotation: 0
+- name: level
+  id: blocks_probe_signal_x
+  parameters: {type: float, comment: ''}
+  states:
+    state: enabled
+    coordinate: [1088.4, 458]
+    rotation: 0
+connections:
+- [adc, '0', dcb, '0']
+- [dcb, '0', rect, '0']
+- [rect, '0', mean, '0']
+- [mean, '0', every_1ms, '0']
+- [every_1ms, '0', alarm, '0']
+- [alarm, '0', to_led, '0']
+- [to_led, '0', led, '0']
+- [every_1ms, '0', log, '0']
+- [every_1ms, '0', level, '0']
+metadata: {file_format: 1}

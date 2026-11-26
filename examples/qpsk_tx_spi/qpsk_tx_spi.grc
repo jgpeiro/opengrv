@@ -1,0 +1,65 @@
+options:
+  parameters: {id: qpsk_tx_spi, generate_options: no_gui, output_language: python, title: QPSK transmitter to a dual SPI DAC, description: 'A QPSK modulator: a PRBS feeds pairs of bits to the constellation
+      mapper, a root-raised-cosine interpolator shapes the symbols (4 samples per symbol), and a dual 12-bit SPI DAC (I on channel A, Q on channel B) plays them at 250 kS/s.', author: OpenGRV examples}
+  states:
+    state: enabled
+    coordinate: [16, 12]
+    rotation: 0
+blocks:
+- name: gain
+  id: variable_qtgui_range
+  parameters: {value: '0.7', comment: '', start: '0', stop: '1', step: '0.01', label: Output level, rangeType: float, widget: counter_slider, orient: QtCore.Qt.Horizontal, min_len: '200', gui_hint: ''}
+  states:
+    state: enabled
+    coordinate: [200, 12]
+    rotation: 0
+- name: prbs
+  id: digital_glfsr_source_x
+  parameters: {type: byte, degree: '15', mask: '24576', seed: '1', repeat: 'True', comment: ''}
+  states:
+    state: enabled
+    coordinate: [16, 172]
+    rotation: 0
+- name: pack2
+  id: blocks_pack_k_bits_bb
+  parameters: {k: '2', comment: ''}
+  states:
+    state: enabled
+    coordinate: [230, 172]
+    rotation: 0
+- name: mapper
+  id: digital_chunks_to_symbols_xx
+  parameters: {in_type: byte, out_type: complex, dimension: '1', num_ports: '1', symbol_table: '[(-1-1j)/1.4142, (1-1j)/1.4142, (-1+1j)/1.4142, (1+1j)/1.4142]', comment: ''}
+  states:
+    state: enabled
+    coordinate: [444, 172]
+    rotation: 0
+- name: rrc
+  id: interp_fir_filter_xxx
+  parameters: {type: ccf, interp: '4', samp_delay: '0', taps: 'firdes.root_raised_cosine(4, 4, 1, 0.35, 41)', comment: ''}
+  states:
+    state: enabled
+    coordinate: [811.4, 165]
+    rotation: 0
+- name: level
+  id: blocks_multiply_const_vxx
+  parameters: {type: complex, const: gain, vlen: '1', comment: ''}
+  states:
+    state: enabled
+    coordinate: [1159.0, 172]
+    rotation: 0
+- name: dac
+  id: grv_spi_sink
+  parameters: {type: complex, role: master, samp_rate: '250000.0', sclk: '13500000.0', mode: '0', frame_bits: '16', data_pos: '0', data_bits: '12', offset_binary: 'True', cmd: '12288', cmd_q: '45056', repeat: 'True',
+    comment: ''}
+  states:
+    state: enabled
+    coordinate: [1375.4, 150]
+    rotation: 0
+connections:
+- [prbs, '0', pack2, '0']
+- [pack2, '0', mapper, '0']
+- [mapper, '0', rrc, '0']
+- [rrc, '0', level, '0']
+- [level, '0', dac, '0']
+metadata: {file_format: 1}

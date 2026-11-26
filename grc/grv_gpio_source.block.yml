@@ -1,0 +1,98 @@
+id: grv_gpio_source
+label: 'GPIO Source'
+category: '[OpenGRV]/Peripheral endpoints'
+flags: [ python ]
+
+parameters:
+-   id: type
+    label: 'Type'
+    dtype: enum
+    default: 'byte'
+    options: [complex, float, int, short, byte]
+    option_attributes:
+        size: [gr.sizeof_gr_complex, gr.sizeof_float, gr.sizeof_int, gr.sizeof_short, gr.sizeof_char]
+    hide: part
+-   id: pins
+    label: 'Pins'
+    dtype: int
+    default: '8'
+-   id: mode
+    label: 'Mode'
+    dtype: enum
+    default: 'periodic'
+    options: [periodic, strobe, change]
+    option_labels: ['Periodic', 'Strobe', 'On change']
+-   id: samp_rate
+    label: 'Sample rate'
+    dtype: real
+    default: 'samp_rate'
+-   id: data_bits
+    label: 'Data bits per component (0: auto)'
+    dtype: int
+    default: '0'
+    hide: part
+-   id: offset_binary
+    label: 'Offset binary'
+    dtype: bool
+    default: 'False'
+    hide: part
+-   id: clk_out
+    label: 'Sample clock output'
+    dtype: bool
+    default: 'False'
+    hide: part
+-   id: phase
+    label: 'Sample delay (clocks)'
+    dtype: int
+    default: '2'
+    hide: part
+    category: 'Advanced'
+-   id: edge
+    label: 'Strobe edge'
+    dtype: enum
+    default: 'rising'
+    options: [rising, falling]
+    option_labels: ['Rising', 'Falling']
+    hide: part
+    category: 'Advanced'
+-   id: filter
+    label: 'Change filter (clocks)'
+    dtype: int
+    default: '4'
+    hide: part
+    category: 'Advanced'
+-   id: depth
+    label: 'FIFO depth'
+    dtype: int
+    default: '32'
+    hide: part
+    category: 'Advanced'
+-   id: sim_file
+    label: 'Simulation file'
+    dtype: file_open
+    default: ''
+    hide: part
+    category: 'Simulation'
+-   id: repeat_sim
+    label: 'Repeat file'
+    dtype: bool
+    default: 'False'
+    hide: part
+    category: 'Simulation'
+
+outputs:
+-   domain: stream
+    dtype: ${ type }
+
+templates:
+    imports: |-
+        from gnuradio import blocks, gr
+    make: |-
+        blocks.file_source(${type.size}, ${sim_file}, ${repeat_sim}) if ${sim_file} else blocks.null_source(${type.size})
+
+documentation: |-
+    Peripheral endpoint (OpenGRV): parallel samples from pins <name>_in, periodic (a rate anchor at
+    samp_rate, with an optional sample clock <name>_clk), at the edges of <name>_stb, or whenever the
+    pins change and stay stable. In GNU Radio the block reads the simulation file.
+
+file_format: 1

@@ -1,0 +1,105 @@
+id: grv_dma_sink
+label: 'DMA Sink'
+category: '[OpenGRV]/Peripheral endpoints'
+flags: [ python ]
+
+parameters:
+-   id: type
+    label: 'Type'
+    dtype: enum
+    default: 'complex'
+    options: [complex, float, int, short, byte]
+    option_attributes:
+        size: [gr.sizeof_gr_complex, gr.sizeof_float, gr.sizeof_int, gr.sizeof_short, gr.sizeof_char]
+    hide: part
+-   id: mode
+    label: 'Mode'
+    dtype: enum
+    default: 'single'
+    options: [single, ring, desc]
+    option_labels: ['Single', 'Ring', 'Descriptors']
+-   id: address
+    label: 'Buffer address (0: set by firmware)'
+    dtype: int
+    default: '0'
+    hide: part
+-   id: length
+    label: 'Length (samples)'
+    dtype: int
+    default: '0'
+    hide: part
+-   id: watermark
+    label: 'Watermark (samples)'
+    dtype: int
+    default: '0'
+    hide: part
+    category: 'Advanced'
+-   id: eof_last
+    label: 'tlast ends a block'
+    dtype: bool
+    default: 'False'
+    hide: part
+    category: 'Advanced'
+-   id: msb_align
+    label: 'MSB-aligned containers'
+    dtype: bool
+    default: 'False'
+    hide: part
+    category: 'Advanced'
+-   id: burst
+    label: 'Burst (accesses)'
+    dtype: int
+    default: '1'
+    hide: part
+    category: 'Advanced'
+-   id: gap
+    label: 'Gap (clocks)'
+    dtype: int
+    default: '0'
+    hide: part
+    category: 'Advanced'
+-   id: prio
+    label: 'High priority'
+    dtype: bool
+    default: 'False'
+    hide: part
+    category: 'Advanced'
+-   id: flow
+    label: 'Flow control (ring)'
+    dtype: bool
+    default: 'False'
+    hide: part
+-   id: drop
+    label: 'Drop when it cannot write'
+    dtype: bool
+    default: 'False'
+    hide: part
+-   id: depth
+    label: 'FIFO depth'
+    dtype: int
+    default: '32'
+    hide: part
+    category: 'Advanced'
+-   id: sim_file
+    label: 'Simulation file'
+    dtype: file_open
+    default: ''
+    hide: part
+    category: 'Simulation'
+
+inputs:
+-   domain: stream
+    dtype: ${ type }
+
+templates:
+    imports: |-
+        from gnuradio import blocks, gr
+    make: |-
+        blocks.file_sink(${type.size}, ${sim_file}, False) if ${sim_file} else blocks.null_sink(${type.size})
+
+documentation: |-
+    DMA channel (OpenGRV), stream to memory (S2MM): writes the samples of the stream into memory as one
+    block, into a ring buffer or along a chain of descriptors, without the CPU. Real-time graphs should
+    set drop so that the graph never waits for the memory. In GNU Radio the block writes the simulation file.
+
+file_format: 1

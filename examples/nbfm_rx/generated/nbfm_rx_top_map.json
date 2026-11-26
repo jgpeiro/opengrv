@@ -1,0 +1,415 @@
+{
+ "top": "nbfm_rx_top",
+ "grvgen": "0.1",
+ "source": "nbfm_rx.grc",
+ "hash": "0x96fdf2de",
+ "base": "0x60000000",
+ "clk": 54000000.0,
+ "profile": {
+  "w": 16,
+  "coef": 18,
+  "gain": 18
+ },
+ "sources": [],
+ "sinks": [
+  {
+   "name": "audio",
+   "kind": "snk",
+   "addr": 8192,
+   "index": 0,
+   "fmt": {
+    "w": 16,
+    "f": 12,
+    "cplx": false,
+    "signed": true,
+    "str": "s16.12"
+   },
+   "depth": 512,
+   "mode": "stream",
+   "capd": 0,
+   "caplen": 0,
+   "window": null,
+   "irq_bit": 0,
+   "vlen": 1,
+   "rate": 48000.0
+  },
+  {
+   "name": "spectrum",
+   "kind": "snk",
+   "addr": 8448,
+   "index": 1,
+   "fmt": {
+    "w": 16,
+    "f": 15,
+    "cplx": true,
+    "signed": true,
+    "str": "cs16.15"
+   },
+   "depth": 512,
+   "mode": "capture",
+   "capd": 1024,
+   "caplen": 1024,
+   "window": 40960,
+   "irq_bit": 1,
+   "vlen": 1,
+   "rate": 1920000.0
+  }
+ ],
+ "probes": [
+  {
+   "name": "rssi",
+   "kind": "probe",
+   "addr": 12288,
+   "index": 0,
+   "fmt": {
+    "w": 16,
+    "f": 11,
+    "cplx": false,
+    "signed": true,
+    "str": "s16.11"
+   }
+  }
+ ],
+ "params": [
+  {
+   "name": "tune",
+   "index": 0,
+   "addr": 256,
+   "words": 1,
+   "width": 32,
+   "signed": true,
+   "var": "tune",
+   "kind": "range",
+   "inst": "xlate",
+   "port": "cfg_freq",
+   "init": 0,
+   "affine": [
+    -2236.9621325,
+    0.0
+   ],
+   "desc": "NCO phase increment, -center_freq / samp_rate * 2^32",
+   "options": null,
+   "lo": -400000.0,
+   "hi": 400000.0,
+   "default": "0"
+  },
+  {
+   "name": "volume",
+   "index": 1,
+   "addr": 260,
+   "words": 1,
+   "width": 18,
+   "signed": true,
+   "var": "volume",
+   "kind": "range",
+   "inst": "vol",
+   "port": "cfg_k",
+   "init": 32768,
+   "affine": [
+    32768.0,
+    0.0
+   ],
+   "desc": "constant s18.15",
+   "options": null,
+   "lo": 0.0,
+   "hi": 2.0,
+   "default": "1"
+  }
+ ],
+ "pads": [
+  {
+   "label": "adc_iq",
+   "dir": "in",
+   "fmt": {
+    "w": 16,
+    "f": 15,
+    "cplx": true,
+    "signed": true,
+    "str": "cs16.15"
+   },
+   "rate": 1920000.0
+  }
+ ],
+ "ovf": [
+  {
+   "bit": 0,
+   "inst": "xlate"
+  },
+  {
+   "bit": 1,
+   "inst": "mag2"
+  },
+  {
+   "bit": 2,
+   "inst": "avg"
+  },
+  {
+   "bit": 3,
+   "inst": "qdemod"
+  },
+  {
+   "bit": 4,
+   "inst": "lpf"
+  },
+  {
+   "bit": 5,
+   "inst": "vol"
+  }
+ ],
+ "blocks": [
+  {
+   "name": "adc_iq",
+   "module": "pad_in",
+   "grc": "adc_iq",
+   "grc_id": "pad_source",
+   "ins": [],
+   "outs": [
+    "cs16.15"
+   ],
+   "rate_out": [
+    1920000.0
+   ],
+   "ii": 1,
+   "cost": {
+    "lut": 0,
+    "ff": 0,
+    "mult": 0,
+    "bram": 0
+   }
+  },
+  {
+   "name": "spectrum",
+   "module": "grv_ep_snk",
+   "grc": "spectrum",
+   "grc_id": "qtgui_freq_sink_x",
+   "ins": [
+    "cs16.15"
+   ],
+   "outs": [],
+   "rate_out": [],
+   "ii": 1,
+   "cost": {
+    "lut": 1000,
+    "ff": 0,
+    "mult": 0,
+    "bram": 3
+   }
+  },
+  {
+   "name": "xlate",
+   "module": "grv_xlating_fir",
+   "grc": "xlate",
+   "grc_id": "freq_xlating_fir_filter_xxx",
+   "ins": [
+    "cs16.15"
+   ],
+   "outs": [
+    "cs16.13"
+   ],
+   "rate_out": [
+    240000.0
+   ],
+   "ii": 15,
+   "cost": {
+    "lut": 800,
+    "ff": 0,
+    "mult": 3,
+    "bram": 4
+   }
+  },
+  {
+   "name": "mag2",
+   "module": "grv_elem",
+   "grc": "mag2",
+   "grc_id": "blocks_complex_to_mag_squared",
+   "ins": [
+    "cs16.13"
+   ],
+   "outs": [
+    "s16.11"
+   ],
+   "rate_out": [
+    240000.0
+   ],
+   "ii": 1,
+   "cost": {
+    "lut": 0,
+    "ff": 0,
+    "mult": 2,
+    "bram": 0
+   }
+  },
+  {
+   "name": "avg",
+   "module": "grv_iir1",
+   "grc": "avg",
+   "grc_id": "single_pole_iir_filter_xx",
+   "ins": [
+    "s16.11"
+   ],
+   "outs": [
+    "s16.11"
+   ],
+   "rate_out": [
+    240000.0
+   ],
+   "ii": 4,
+   "cost": {
+    "lut": 120,
+    "ff": 0,
+    "mult": 1,
+    "bram": 0
+   }
+  },
+  {
+   "name": "qdemod",
+   "module": "grv_cordic_vec",
+   "grc": "qdemod",
+   "grc_id": "analog_quadrature_demod_cf",
+   "ins": [
+    "cs16.13"
+   ],
+   "outs": [
+    "s16.13"
+   ],
+   "rate_out": [
+    240000.0
+   ],
+   "ii": 30,
+   "cost": {
+    "lut": 1375,
+    "ff": 0,
+    "mult": 6,
+    "bram": 0
+   }
+  },
+  {
+   "name": "lpf",
+   "module": "grv_fir",
+   "grc": "lpf",
+   "grc_id": "low_pass_filter",
+   "ins": [
+    "s16.13"
+   ],
+   "outs": [
+    "s16.13"
+   ],
+   "rate_out": [
+    48000.0
+   ],
+   "ii": 30,
+   "cost": {
+    "lut": 450,
+    "ff": 0,
+    "mult": 1,
+    "bram": 3
+   }
+  },
+  {
+   "name": "rssi",
+   "module": "probe",
+   "grc": "rssi",
+   "grc_id": "blocks_probe_signal_x",
+   "ins": [
+    "s16.11"
+   ],
+   "outs": [],
+   "rate_out": [],
+   "ii": 1,
+   "cost": {
+    "lut": 0,
+    "ff": 0,
+    "mult": 0,
+    "bram": 0
+   }
+  },
+  {
+   "name": "vol",
+   "module": "grv_multiply_const",
+   "grc": "vol",
+   "grc_id": "blocks_multiply_const_vxx",
+   "ins": [
+    "s16.13"
+   ],
+   "outs": [
+    "s16.12"
+   ],
+   "rate_out": [
+    48000.0
+   ],
+   "ii": 1,
+   "cost": {
+    "lut": 0,
+    "ff": 0,
+    "mult": 1,
+    "bram": 0
+   }
+  },
+  {
+   "name": "audio",
+   "module": "grv_ep_snk",
+   "grc": "audio",
+   "grc_id": "grv_axil_sink",
+   "ins": [
+    "s16.12"
+   ],
+   "outs": [],
+   "rate_out": [],
+   "ii": 1,
+   "cost": {
+    "lut": 550,
+    "ff": 0,
+    "mult": 0,
+    "bram": 1
+   }
+  },
+  {
+   "name": "fork_n1",
+   "module": "grv_fork",
+   "grc": null,
+   "grc_id": "",
+   "ins": [
+    "cs16.15"
+   ],
+   "outs": [
+    "cs16.15",
+    "cs16.15"
+   ],
+   "rate_out": [
+    1920000.0,
+    1920000.0
+   ],
+   "ii": 1,
+   "cost": {
+    "lut": 4,
+    "ff": 0,
+    "mult": 0,
+    "bram": 0
+   }
+  },
+  {
+   "name": "fork_n3",
+   "module": "grv_fork",
+   "grc": null,
+   "grc_id": "",
+   "ins": [
+    "cs16.13"
+   ],
+   "outs": [
+    "cs16.13",
+    "cs16.13"
+   ],
+   "rate_out": [
+    240000.0,
+    240000.0
+   ],
+   "ii": 1,
+   "cost": {
+    "lut": 4,
+    "ff": 0,
+    "mult": 0,
+    "bram": 0
+   }
+  }
+ ]
+}

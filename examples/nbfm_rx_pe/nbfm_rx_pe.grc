@@ -1,0 +1,129 @@
+options:
+  parameters: {author: OpenGRV, category: '[GRC Hier Blocks]', description: 'The receiver of examples/nbfm_rx with the audio on a sigma-delta pin, the spectrum snapshot in RAM through DMA and the channel
+      power as text on a UART (design document, chapter 9).', generate_options: qt_gui, id: nbfm_rx, output_language: python, title: NBFM receiver with peripheral endpoints and DMA}
+  states:
+    coordinate: [16, 12]
+    rotation: 0
+    state: enabled
+blocks:
+- name: samp_rate
+  id: variable
+  parameters: {comment: '', value: 1.92e6}
+  states:
+    coordinate: [200, 12]
+    rotation: 0
+    state: enabled
+- name: audio_rate
+  id: variable
+  parameters: {comment: '', value: 48e3}
+  states:
+    coordinate: [354, 12]
+    rotation: 0
+    state: enabled
+- name: tune
+  id: variable_qtgui_range
+  parameters: {comment: '', gui_hint: '', label: Tuning (Hz), min_len: '200', orient: QtCore.Qt.Horizontal, rangeType: float, start: -400e3, step: 1e3, stop: 400e3, value: 0, widget: counter_slider}
+  states:
+    coordinate: [508, 12]
+    rotation: 0
+    state: enabled
+- name: volume
+  id: variable_qtgui_range
+  parameters: {comment: '', gui_hint: '', label: Volume, min_len: '200', orient: QtCore.Qt.Horizontal, rangeType: float, start: 0, step: 0.05, stop: 2, value: 1, widget: counter_slider}
+  states:
+    coordinate: [662, 12]
+    rotation: 0
+    state: enabled
+- name: adc_iq
+  id: pad_source
+  parameters: {affinity: '', alias: '', comment: '@grv fmt=cs16.15 rate=samp_rate', label: adc_iq, maxoutbuf: '0', minoutbuf: '0', num_streams: '1', optional: 'False', type: complex, vlen: '1'}
+  states:
+    coordinate: [16, 165]
+    rotation: 0
+    state: enabled
+- name: xlate
+  id: freq_xlating_fir_filter_xxx
+  parameters: {affinity: '', alias: '', center_freq: tune, comment: '', decim: '8', maxoutbuf: '0', minoutbuf: '0', samp_rate: samp_rate, taps: 'firdes.low_pass(1, samp_rate, 100e3, 20e3)', type: ccf}
+  states:
+    coordinate: [230, 150]
+    rotation: 0
+    state: enabled
+- name: qdemod
+  id: analog_quadrature_demod_cf
+  parameters: {affinity: '', alias: '', comment: '@grv range=2', gain: (samp_rate / 8) / (2 * math.pi * 5e3), maxoutbuf: '0', minoutbuf: '0'}
+  states:
+    coordinate: [577.6, 165]
+    rotation: 0
+    state: enabled
+- name: lpf
+  id: low_pass_filter
+  parameters: {affinity: '', alias: '', beta: '6.76', comment: '', cutoff_freq: 4e3, decim: '5', gain: '1', interp: '1', maxoutbuf: '0', minoutbuf: '0', samp_rate: samp_rate / 8, type: fir_filter_fff, width: 2e3,
+    win: window.WIN_HAMMING}
+  states:
+    coordinate: [925.2, 150]
+    rotation: 0
+    state: enabled
+- name: vol
+  id: blocks_multiply_const_vxx
+  parameters: {affinity: '', alias: '', comment: '', const: volume, maxoutbuf: '0', minoutbuf: '0', type: float, vlen: '1'}
+  states:
+    coordinate: [1202.4, 165]
+    rotation: 0
+    state: enabled
+- name: mag2
+  id: blocks_complex_to_mag_squared
+  parameters: {affinity: '', alias: '', comment: '', maxoutbuf: '0', minoutbuf: '0', vlen: '1'}
+  states:
+    coordinate: [577.6, 296]
+    rotation: 0
+    state: enabled
+- name: avg
+  id: single_pole_iir_filter_xx
+  parameters: {affinity: '', alias: '', alpha: '0.01', comment: '', maxoutbuf: '0', minoutbuf: '0', type: float, vlen: '1'}
+  states:
+    coordinate: [925.2, 289]
+    rotation: 0
+    state: enabled
+- name: audio
+  id: grv_gpio_sink
+  parameters: {type: float, pins: '1', mode: sdm, samp_rate: audio_rate, data_bits: '12', offset_binary: 'False', clk_out: 'False', phase: '1', sdm_order: '2', sdm_div: '0', repeat: 'True', drop: 'True',
+    depth: '32', sim_file: '', comment: '', affinity: '', alias: ''}
+  states:
+    coordinate: [1484.0, 150]
+    rotation: 0
+    state: enabled
+- name: spectrum
+  id: grv_dma_sink
+  parameters: {type: complex, mode: single, address: '0', length: '1024', watermark: '0', eof_last: 'False', msb_align: 'False', burst: '1', gap: '0', prio: 'False', flow: 'False', drop: 'True', depth: '32',
+    sim_file: '', comment: '', affinity: '', alias: ''}
+  states:
+    coordinate: [230, 281]
+    rotation: 0
+    state: enabled
+- name: decim50
+  id: blocks_keep_one_in_n
+  parameters: {affinity: '', alias: '', comment: '', maxoutbuf: '0', minoutbuf: '0', n: int(samp_rate / 8 / 50), type: float, vlen: '1'}
+  states:
+    coordinate: [1202.4, 289]
+    rotation: 0
+    state: enabled
+- name: log
+  id: grv_uart_sink
+  parameters: {type: float, baud: '115200', parity: none, stop_bits: '1', flow: 'False', msb_first: 'False', invert: 'False', gap: '0', text: 'True', drop: 'True', depth: '32', sim_file: '', comment: '',
+    affinity: '', alias: ''}
+  states:
+    coordinate: [1484.0, 281]
+    rotation: 0
+    state: enabled
+connections:
+- [adc_iq, '0', xlate, '0']
+- [adc_iq, '0', spectrum, '0']
+- [xlate, '0', qdemod, '0']
+- [xlate, '0', mag2, '0']
+- [qdemod, '0', lpf, '0']
+- [lpf, '0', vol, '0']
+- [vol, '0', audio, '0']
+- [mag2, '0', avg, '0']
+- [avg, '0', decim50, '0']
+- [decim50, '0', log, '0']
+metadata: {file_format: 1}

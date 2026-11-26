@@ -1,0 +1,31 @@
+id: grv_axil_probe
+label: 'AXI4-Lite Probe'
+category: '[OpenGRV]'
+flags: [ python ]
+
+parameters:
+-   id: type
+    label: 'Type'
+    dtype: enum
+    default: 'float'
+    options: [complex, float, int, short, byte]
+    option_attributes:
+        fcn: [c, f, i, s, b]
+        cic: [ccf, fff, x, x, x]
+        size: [gr.sizeof_gr_complex, gr.sizeof_float, gr.sizeof_int, gr.sizeof_short, gr.sizeof_char]
+    hide: part
+
+inputs:
+-   domain: stream
+    dtype: ${ type }
+
+templates:
+    imports: |-
+        from gnuradio import blocks, filter, gr
+        import numpy, functools, math
+    make: blocks.probe_signal_${type.fcn}()
+
+documentation: |-
+    Probe register holding the latest sample (OpenGRV). In GNU Radio it is a probe_signal.
+
+file_format: 1

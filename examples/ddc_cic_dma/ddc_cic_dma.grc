@@ -1,0 +1,89 @@
+options:
+  parameters: {id: ddc_cic_dma, generate_options: no_gui, output_language: python, title: Digital down-converter with CIC and DMA, description: 'A digital down-converter for an ADC at 27 MS/s: a rotator
+      moves the channel to 0 Hz, a four-stage CIC decimates by 32, a compensating FIR by 2 more, and a DMA channel writes the 421.875 kS/s baseband into a ring buffer in RAM. A probe tracks the channel
+      power.', author: OpenGRV examples}
+  states:
+    state: enabled
+    coordinate: [16, 12]
+    rotation: 0
+blocks:
+- name: samp_rate
+  id: variable
+  parameters: {value: '27000000.0', comment: ''}
+  states:
+    state: enabled
+    coordinate: [200, 12]
+    rotation: 0
+- name: tune
+  id: variable_qtgui_range
+  parameters: {value: '0', comment: '', start: '-10000000.0', stop: '10000000.0', step: '1000.0', label: Centre (Hz), rangeType: float, widget: counter_slider, orient: QtCore.Qt.Horizontal, min_len: '200',
+    gui_hint: ''}
+  states:
+    state: enabled
+    coordinate: [354, 12]
+    rotation: 0
+- name: adc_iq
+  id: pad_source
+  parameters: {type: complex, label: adc_iq, num_streams: '1', vlen: '1', optional: 'False', comment: '@grv rate=samp_rate'}
+  states:
+    state: enabled
+    coordinate: [16, 165]
+    rotation: 0
+- name: mixer
+  id: blocks_rotator_cc
+  parameters: {phase_inc: -2 * math.pi * tune / samp_rate, comment: ''}
+  states:
+    state: enabled
+    coordinate: [230, 165]
+    rotation: 0
+- name: cic
+  id: grv_cic_decim
+  parameters: {type: complex, stages: '4', ratio: '32', diff_delay: '1', comment: ''}
+  states:
+    state: enabled
+    coordinate: [610.5999999999999, 157]
+    rotation: 0
+- name: cfir
+  id: low_pass_filter
+  parameters: {type: fir_filter_ccf, decim: '2', interp: '1', gain: '1', samp_rate: samp_rate / 32, cutoff_freq: '150000.0', width: '60000.0', win: window.WIN_BLACKMAN, beta: '6.76', comment: ''}
+  states:
+    state: enabled
+    coordinate: [824.5999999999999, 150]
+    rotation: 0
+- name: baseband
+  id: grv_dma_sink
+  parameters: {type: complex, mode: ring, burst: '4', drop: 'True', comment: ''}
+  states:
+    state: enabled
+    coordinate: [1048.6, 157]
+    rotation: 0
+- name: pwr
+  id: blocks_complex_to_mag_squared
+  parameters: {vlen: '1', comment: ''}
+  states:
+    state: enabled
+    coordinate: [1048.6, 296]
+    rotation: 0
+- name: avg
+  id: single_pole_iir_filter_xx
+  parameters: {type: float, alpha: '0.02', vlen: '1', comment: ''}
+  states:
+    state: enabled
+    coordinate: [1280.1999999999998, 289]
+    rotation: 0
+- name: power
+  id: blocks_probe_signal_x
+  parameters: {type: float, comment: ''}
+  states:
+    state: enabled
+    coordinate: [1557.3999999999999, 296]
+    rotation: 0
+connections:
+- [adc_iq, '0', mixer, '0']
+- [mixer, '0', cic, '0']
+- [cic, '0', cfir, '0']
+- [cfir, '0', baseband, '0']
+- [cfir, '0', pwr, '0']
+- [pwr, '0', avg, '0']
+- [avg, '0', power, '0']
+metadata: {file_format: 1}

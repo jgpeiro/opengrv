@@ -1,0 +1,45 @@
+id: grv_axil_sink
+label: 'AXI4-Lite Sink'
+category: '[OpenGRV]'
+flags: [ python ]
+
+parameters:
+-   id: type
+    label: 'Type'
+    dtype: enum
+    default: 'float'
+    options: [complex, float, int, short, byte]
+    option_attributes:
+        fcn: [c, f, i, s, b]
+        cic: [ccf, fff, x, x, x]
+        size: [gr.sizeof_gr_complex, gr.sizeof_float, gr.sizeof_int, gr.sizeof_short, gr.sizeof_char]
+    hide: part
+-   id: depth
+    label: 'FIFO depth'
+    dtype: int
+    default: '512'
+-   id: mode
+    label: 'Mode'
+    dtype: enum
+    default: 'stream'
+    options: [stream, drop, capture]
+    hide: part
+-   id: caplen
+    label: 'Capture length'
+    dtype: int
+    default: '1024'
+
+inputs:
+-   domain: stream
+    dtype: ${ type }
+
+templates:
+    imports: |-
+        from gnuradio import blocks, filter, gr
+        import numpy, functools, math
+    make: blocks.vector_sink_${type.fcn}()
+
+documentation: |-
+    Sink endpoint read by the CPU through AXI4-Lite (OpenGRV): stream (FIFO with back-pressure), drop (FIFO, drops when full) or capture (triggered buffer). In GNU Radio it is a vector sink.
+
+file_format: 1

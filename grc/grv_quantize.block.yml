@@ -1,0 +1,35 @@
+id: grv_quantize
+label: 'Quantize'
+category: '[OpenGRV]'
+flags: [ python ]
+
+parameters:
+-   id: type
+    label: 'Type'
+    dtype: enum
+    default: 'float'
+    options: [complex, float]
+    option_attributes:
+        fcn: [c, f]
+        cic: [ccf, fff]
+        size: [gr.sizeof_gr_complex, gr.sizeof_float]
+    hide: part
+
+inputs:
+-   domain: stream
+    dtype: ${ type }
+
+outputs:
+-   domain: stream
+    dtype: ${ type }
+
+templates:
+    imports: |-
+        from gnuradio import blocks, filter, gr
+        import numpy, functools, math
+    make: blocks.copy(${type.size})
+
+documentation: |-
+    Requantises a stream to the format given with @grv fmt=... in the comment (OpenGRV); a copy in GNU Radio.
+
+file_format: 1

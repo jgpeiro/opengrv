@@ -1,0 +1,123 @@
+id: grv_dma_source
+label: 'DMA Source'
+category: '[OpenGRV]/Peripheral endpoints'
+flags: [ python ]
+
+parameters:
+-   id: type
+    label: 'Type'
+    dtype: enum
+    default: 'complex'
+    options: [complex, float, int, short, byte]
+    option_attributes:
+        size: [gr.sizeof_gr_complex, gr.sizeof_float, gr.sizeof_int, gr.sizeof_short, gr.sizeof_char]
+    hide: part
+-   id: mode
+    label: 'Mode'
+    dtype: enum
+    default: 'single'
+    options: [single, ring, desc]
+    option_labels: ['Single', 'Ring', 'Descriptors']
+-   id: address
+    label: 'Buffer address (0: set by firmware)'
+    dtype: int
+    default: '0'
+    hide: part
+-   id: length
+    label: 'Length (samples)'
+    dtype: int
+    default: '0'
+    hide: part
+-   id: watermark
+    label: 'Watermark (samples)'
+    dtype: int
+    default: '0'
+    hide: part
+    category: 'Advanced'
+-   id: eof_last
+    label: 'tlast ends a block'
+    dtype: bool
+    default: 'False'
+    hide: part
+    category: 'Advanced'
+-   id: msb_align
+    label: 'MSB-aligned containers'
+    dtype: bool
+    default: 'False'
+    hide: part
+    category: 'Advanced'
+-   id: burst
+    label: 'Burst (accesses)'
+    dtype: int
+    default: '1'
+    hide: part
+    category: 'Advanced'
+-   id: gap
+    label: 'Gap (clocks)'
+    dtype: int
+    default: '0'
+    hide: part
+    category: 'Advanced'
+-   id: prio
+    label: 'High priority'
+    dtype: bool
+    default: 'False'
+    hide: part
+    category: 'Advanced'
+-   id: flow
+    label: 'Flow control (ring)'
+    dtype: bool
+    default: 'False'
+    hide: part
+-   id: frame
+    label: 'tlast every (samples)'
+    dtype: int
+    default: '0'
+    hide: part
+    category: 'Advanced'
+-   id: vlen
+    label: 'Vector length'
+    dtype: int
+    default: '1'
+    hide: part
+-   id: samp_rate
+    label: 'Sample rate (0: unknown)'
+    dtype: real
+    default: '0'
+    hide: part
+-   id: depth
+    label: 'FIFO depth'
+    dtype: int
+    default: '32'
+    hide: part
+    category: 'Advanced'
+-   id: sim_file
+    label: 'Simulation file'
+    dtype: file_open
+    default: ''
+    hide: part
+    category: 'Simulation'
+-   id: repeat_sim
+    label: 'Repeat file'
+    dtype: bool
+    default: 'False'
+    hide: part
+    category: 'Simulation'
+
+outputs:
+-   domain: stream
+    dtype: ${ type }
+
+templates:
+    imports: |-
+        from gnuradio import blocks, gr
+    make: |-
+        blocks.file_source(${type.size}, ${sim_file}, ${repeat_sim}) if ${sim_file} else blocks.null_source(${type.size})
+
+documentation: |-
+    DMA channel (OpenGRV), memory to stream (MM2S): reads samples from memory (8-, 16- or 32-bit
+    containers per component, little-endian, I below Q) and feeds them into the graph, as one block, from
+    a ring buffer or along a chain of descriptors. With an address and a length the channel starts at
+    reset; otherwise the firmware starts it (fw/grv_dma.h). In GNU Radio the block reads the simulation file.
+
+file_format: 1

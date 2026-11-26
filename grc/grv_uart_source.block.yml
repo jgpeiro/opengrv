@@ -1,0 +1,96 @@
+id: grv_uart_source
+label: 'UART Source'
+category: '[OpenGRV]/Peripheral endpoints'
+flags: [ python ]
+
+parameters:
+-   id: type
+    label: 'Type'
+    dtype: enum
+    default: 'short'
+    options: [complex, float, int, short, byte]
+    option_attributes:
+        size: [gr.sizeof_gr_complex, gr.sizeof_float, gr.sizeof_int, gr.sizeof_short, gr.sizeof_char]
+    hide: part
+-   id: baud
+    label: 'Baud rate'
+    dtype: real
+    default: '115200'
+-   id: parity
+    label: 'Parity'
+    dtype: enum
+    default: 'none'
+    options: [none, even, odd]
+    option_labels: ['None', 'Even', 'Odd']
+-   id: stop_bits
+    label: 'Stop bits'
+    dtype: int
+    default: '1'
+    options: [1, 2]
+    hide: part
+-   id: flow
+    label: 'RTS/CTS flow control'
+    dtype: bool
+    default: 'False'
+    hide: part
+-   id: msb_first
+    label: 'Most significant byte first'
+    dtype: bool
+    default: 'False'
+    hide: part
+    category: 'Advanced'
+-   id: invert
+    label: 'Inverted lines'
+    dtype: bool
+    default: 'False'
+    hide: part
+    category: 'Advanced'
+-   id: gap
+    label: 'Gap (bit times)'
+    dtype: int
+    default: '0'
+    hide: part
+    category: 'Advanced'
+-   id: frame
+    label: 'tlast every (samples)'
+    dtype: int
+    default: '0'
+    hide: part
+    category: 'Advanced'
+-   id: depth
+    label: 'FIFO depth'
+    dtype: int
+    default: '32'
+    hide: part
+    category: 'Advanced'
+-   id: sim_file
+    label: 'Simulation file'
+    dtype: file_open
+    default: ''
+    hide: part
+    category: 'Simulation'
+-   id: repeat_sim
+    label: 'Repeat file'
+    dtype: bool
+    default: 'False'
+    hide: part
+    category: 'Simulation'
+
+outputs:
+-   domain: stream
+    dtype: ${ type }
+
+templates:
+    imports: |-
+        from gnuradio import blocks, gr
+    make: |-
+        blocks.file_source(${type.size}, ${sim_file}, ${repeat_sim}) if ${sim_file} else blocks.null_source(${type.size})
+
+documentation: |-
+    Peripheral endpoint (OpenGRV): samples received on <name>_rxd, ceil(W/8) bytes per sample, least
+    significant byte first. The receiver is a rate anchor: baud / (bits per character x bytes per sample).
+    In GNU Radio the block reads the simulation file (raw samples of the type), or produces nothing.
+    Settings become the reset values of the endpoint registers (TIMING, FORMAT); see the design document,
+    chapter 9.
+
+file_format: 1

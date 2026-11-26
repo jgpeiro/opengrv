@@ -1,0 +1,96 @@
+options:
+  parameters: {id: bpsk_rx_uart, generate_options: no_gui, output_language: python, title: BPSK receiver with a UART data output, description: 'A BPSK receiver for a complex ADC at 1 MS/s and 125 kbit/s:
+      root-raised-cosine matched filter, AGC, Costas loop for the carrier, one sample per symbol, slicer, and bytes out on a UART at 921600 Bd. The symbol clock is assumed known (a fixed phase), as in a
+      lab link.', author: OpenGRV examples}
+  states:
+    state: enabled
+    coordinate: [16, 12]
+    rotation: 0
+blocks:
+- name: samp_rate
+  id: variable
+  parameters: {value: '1000000.0', comment: ''}
+  states:
+    state: enabled
+    coordinate: [200, 12]
+    rotation: 0
+- name: sps
+  id: variable
+  parameters: {value: '8', comment: ''}
+  states:
+    state: enabled
+    coordinate: [354, 12]
+    rotation: 0
+- name: adc_iq
+  id: pad_source
+  parameters: {type: complex, label: adc_iq, num_streams: '1', vlen: '1', optional: 'False', comment: '@grv rate=samp_rate'}
+  states:
+    state: enabled
+    coordinate: [16, 165]
+    rotation: 0
+- name: mf
+  id: root_raised_cosine_filter
+  parameters: {type: fir_filter_ccf, decim: '1', interp: '1', gain: '1', samp_rate: samp_rate, sym_rate: samp_rate / sps, alpha: '0.35', ntaps: '65', comment: ''}
+  states:
+    state: enabled
+    coordinate: [230, 150]
+    rotation: 0
+- name: agc
+  id: analog_agc_xx
+  parameters: {type: complex, rate: '0.001', reference: '0.7', gain: '1', max_gain: '100', comment: ''}
+  states:
+    state: enabled
+    coordinate: [530.0, 157]
+    rotation: 0
+- name: costas
+  id: digital_costas_loop_cc
+  parameters: {w: '0.02', order: '2', use_snr: 'False', comment: ''}
+  states:
+    state: enabled
+    coordinate: [744.0, 157]
+    rotation: 0
+- name: strobe
+  id: blocks_keep_one_in_n
+  parameters: {type: complex, n: sps, vlen: '1', comment: ''}
+  states:
+    state: enabled
+    coordinate: [958.0, 165]
+    rotation: 0
+- name: re
+  id: blocks_complex_to_real
+  parameters: {vlen: '1', comment: ''}
+  states:
+    state: enabled
+    coordinate: [1172.0, 172]
+    rotation: 0
+- name: slicer
+  id: digital_binary_slicer_fb
+  parameters: {comment: ''}
+  states:
+    state: enabled
+    coordinate: [1396.0, 172]
+    rotation: 0
+- name: bytes
+  id: blocks_pack_k_bits_bb
+  parameters: {k: '8', comment: ''}
+  states:
+    state: enabled
+    coordinate: [1610.0, 165]
+    rotation: 0
+- name: data
+  id: grv_uart_sink
+  parameters: {type: byte, baud: '921600', parity: none, stop_bits: '1', comment: ''}
+  states:
+    state: enabled
+    coordinate: [1824.0, 165]
+    rotation: 0
+connections:
+- [adc_iq, '0', mf, '0']
+- [mf, '0', agc, '0']
+- [agc, '0', costas, '0']
+- [costas, '0', strobe, '0']
+- [strobe, '0', re, '0']
+- [re, '0', slicer, '0']
+- [slicer, '0', bytes, '0']
+- [bytes, '0', data, '0']
+metadata: {file_format: 1}

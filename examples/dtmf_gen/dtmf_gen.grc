@@ -1,0 +1,86 @@
+options:
+  parameters: {id: dtmf_gen, generate_options: no_gui, output_language: python, title: DTMF generator on a sigma-delta pin and I2S, description: 'A DTMF tone generator: two oscillators with runtime frequencies
+      (the row and column tones of a key) are summed and scaled, then played on a single pin as a second-order sigma-delta bit stream (an RC filter makes it analogue) and on an I2S DAC.', author: OpenGRV
+      examples}
+  states:
+    state: enabled
+    coordinate: [16, 12]
+    rotation: 0
+blocks:
+- name: fs
+  id: variable
+  parameters: {value: '48000.0', comment: ''}
+  states:
+    state: enabled
+    coordinate: [200, 12]
+    rotation: 0
+- name: f_row
+  id: variable_qtgui_range
+  parameters: {value: '697', comment: '', start: '600', stop: '1000', step: '1', label: Row tone (Hz), rangeType: float, widget: counter_slider, orient: QtCore.Qt.Horizontal, min_len: '200', gui_hint: ''}
+  states:
+    state: enabled
+    coordinate: [354, 12]
+    rotation: 0
+- name: f_col
+  id: variable_qtgui_range
+  parameters: {value: '1209', comment: '', start: '1100', stop: '1700', step: '1', label: Column tone (Hz), rangeType: float, widget: counter_slider, orient: QtCore.Qt.Horizontal, min_len: '200', gui_hint: ''}
+  states:
+    state: enabled
+    coordinate: [508, 12]
+    rotation: 0
+- name: volume
+  id: variable_qtgui_range
+  parameters: {value: '0.4', comment: '', start: '0', stop: '0.5', step: '0.01', label: Level, rangeType: float, widget: counter_slider, orient: QtCore.Qt.Horizontal, min_len: '200', gui_hint: ''}
+  states:
+    state: enabled
+    coordinate: [662, 12]
+    rotation: 0
+- name: row
+  id: analog_sig_source_x
+  parameters: {type: float, samp_rate: fs, waveform: analog.GR_SIN_WAVE, freq: f_row, amp: '1', offset: '0', phase: '0', comment: ''}
+  states:
+    state: enabled
+    coordinate: [16, 157]
+    rotation: 0
+- name: col
+  id: analog_sig_source_x
+  parameters: {type: float, samp_rate: fs, waveform: analog.GR_SIN_WAVE, freq: f_col, amp: '1', offset: '0', phase: '0', comment: ''}
+  states:
+    state: enabled
+    coordinate: [16, 296]
+    rotation: 0
+- name: sum
+  id: blocks_add_xx
+  parameters: {type: float, num_inputs: '2', vlen: '1', comment: ''}
+  states:
+    state: enabled
+    coordinate: [231.6, 313]
+    rotation: 0
+- name: level
+  id: blocks_multiply_const_vxx
+  parameters: {type: float, const: volume, vlen: '1', comment: ''}
+  states:
+    state: enabled
+    coordinate: [445.6, 311]
+    rotation: 0
+- name: pin
+  id: grv_gpio_sink
+  parameters: {type: float, pins: '1', mode: sdm, data_bits: '12', samp_rate: fs, repeat: 'True', comment: ''}
+  states:
+    state: enabled
+    coordinate: [662.0, 296]
+    rotation: 0
+- name: audio
+  id: grv_i2s_sink
+  parameters: {type: float, role: master, samp_rate: fs, slot_bits: '16', data_bits: '16', format: left, duplicate: 'True', repeat: 'True', comment: ''}
+  states:
+    state: enabled
+    coordinate: [662.0, 428]
+    rotation: 0
+connections:
+- [row, '0', sum, '0']
+- [col, '0', sum, '1']
+- [sum, '0', level, '0']
+- [level, '0', pin, '0']
+- [level, '0', audio, '0']
+metadata: {file_format: 1}

@@ -1,0 +1,79 @@
+options:
+  parameters: {id: wbfm_rx_i2s, generate_options: no_gui, output_language: python, title: Wideband FM receiver with I2S audio, description: 'A broadcast FM receiver built from primitive blocks: channel
+      filter to 480 kS/s, quadrature demodulator, 75 us de-emphasis, audio filter and decimation to 48 kS/s, volume and an I2S DAC.', author: OpenGRV examples}
+  states:
+    state: enabled
+    coordinate: [16, 12]
+    rotation: 0
+blocks:
+- name: samp_rate
+  id: variable
+  parameters: {value: '1920000.0', comment: ''}
+  states:
+    state: enabled
+    coordinate: [200, 12]
+    rotation: 0
+- name: volume
+  id: variable_qtgui_range
+  parameters: {value: '0.8', comment: '', start: '0', stop: '2', step: '0.05', label: Volume, rangeType: float, widget: counter_slider, orient: QtCore.Qt.Horizontal, min_len: '200', gui_hint: ''}
+  states:
+    state: enabled
+    coordinate: [354, 12]
+    rotation: 0
+- name: adc_iq
+  id: pad_source
+  parameters: {type: complex, label: adc_iq, num_streams: '1', vlen: '1', optional: 'False', comment: '@grv rate=samp_rate'}
+  states:
+    state: enabled
+    coordinate: [16, 172]
+    rotation: 0
+- name: chan
+  id: low_pass_filter
+  parameters: {type: fir_filter_ccf, decim: '4', interp: '1', gain: '1', samp_rate: samp_rate, cutoff_freq: '110000.0', width: '60000.0', win: window.WIN_HAMMING, beta: '6.76', comment: ''}
+  states:
+    state: enabled
+    coordinate: [230, 157]
+    rotation: 0
+- name: fmdemod
+  id: analog_quadrature_demod_cf
+  parameters: {gain: (samp_rate / 4) / (2 * math.pi * 75e3), comment: '@grv range=2'}
+  states:
+    state: enabled
+    coordinate: [454.0, 172]
+    rotation: 0
+- name: deemph
+  id: single_pole_iir_filter_xx
+  parameters: {type: float, alpha: 1 - math.exp(-1 / (480e3 * 75e-6)), vlen: '1', comment: ''}
+  states:
+    state: enabled
+    coordinate: [801.6, 172]
+    rotation: 0
+- name: audio_lpf
+  id: low_pass_filter
+  parameters: {type: fir_filter_fff, decim: '10', interp: '1', gain: '1', samp_rate: '480000.0', cutoff_freq: '15000.0', width: '5000.0', win: window.WIN_HAMMING, beta: '6.76', comment: ''}
+  states:
+    state: enabled
+    coordinate: [1155.8, 157]
+    rotation: 0
+- name: vol
+  id: blocks_multiply_const_vxx
+  parameters: {type: float, const: volume, vlen: '1', comment: ''}
+  states:
+    state: enabled
+    coordinate: [1379.8, 172]
+    rotation: 0
+- name: audio
+  id: grv_i2s_sink
+  parameters: {type: float, role: master, samp_rate: '48000.0', slot_bits: '32', data_bits: '24', format: i2s, duplicate: 'True', drop: 'True', repeat: 'True', comment: ''}
+  states:
+    state: enabled
+    coordinate: [1596.1999999999998, 150]
+    rotation: 0
+connections:
+- [adc_iq, '0', chan, '0']
+- [chan, '0', fmdemod, '0']
+- [fmdemod, '0', deemph, '0']
+- [deemph, '0', audio_lpf, '0']
+- [audio_lpf, '0', vol, '0']
+- [vol, '0', audio, '0']
+metadata: {file_format: 1}

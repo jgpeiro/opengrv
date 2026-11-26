@@ -1,0 +1,101 @@
+id: grv_gpio_sink
+label: 'GPIO Sink'
+category: '[OpenGRV]/Peripheral endpoints'
+flags: [ python ]
+
+parameters:
+-   id: type
+    label: 'Type'
+    dtype: enum
+    default: 'float'
+    options: [complex, float, int, short, byte]
+    option_attributes:
+        size: [gr.sizeof_gr_complex, gr.sizeof_float, gr.sizeof_int, gr.sizeof_short, gr.sizeof_char]
+    hide: part
+-   id: pins
+    label: 'Pins'
+    dtype: int
+    default: '8'
+-   id: mode
+    label: 'Mode'
+    dtype: enum
+    default: 'parallel'
+    options: [parallel, pwm, sdm]
+    option_labels: ['Parallel', 'PWM', 'Sigma-delta']
+-   id: samp_rate
+    label: 'Sample rate'
+    dtype: real
+    default: 'samp_rate'
+-   id: data_bits
+    label: 'Data bits per component (0: auto)'
+    dtype: int
+    default: '0'
+-   id: offset_binary
+    label: 'Offset binary'
+    dtype: bool
+    default: 'False'
+    hide: part
+-   id: clk_out
+    label: 'Sample clock output'
+    dtype: bool
+    default: 'False'
+    hide: part
+-   id: phase
+    label: 'Clock delay (clocks)'
+    dtype: int
+    default: '1'
+    hide: part
+    category: 'Advanced'
+-   id: sdm_order
+    label: 'Sigma-delta order'
+    dtype: int
+    default: '2'
+    options: [1, 2]
+    hide: part
+    category: 'Advanced'
+-   id: sdm_div
+    label: 'Sigma-delta clock divider'
+    dtype: int
+    default: '0'
+    hide: part
+    category: 'Advanced'
+-   id: repeat
+    label: 'Repeat last sample'
+    dtype: bool
+    default: 'False'
+    hide: part
+-   id: drop
+    label: 'Drop when full'
+    dtype: bool
+    default: 'False'
+    hide: part
+-   id: depth
+    label: 'FIFO depth'
+    dtype: int
+    default: '32'
+    hide: part
+    category: 'Advanced'
+-   id: sim_file
+    label: 'Simulation file'
+    dtype: file_open
+    default: ''
+    hide: part
+    category: 'Simulation'
+
+inputs:
+-   domain: stream
+    dtype: ${ type }
+
+templates:
+    imports: |-
+        from gnuradio import blocks, gr
+    make: |-
+        blocks.file_sink(${type.size}, ${sim_file}, False) if ${sim_file} else blocks.null_sink(${type.size})
+
+documentation: |-
+    Peripheral endpoint (OpenGRV): samples to pins <name>_out as parallel words (a DAC), as PWM (one pin
+    per component, period 2^data_bits clocks) or as a first- or second-order sigma-delta bit stream (one
+    pin per component, followed by an RC filter). grvgen converts the stream to the field format.
+    In GNU Radio the block writes the simulation file.
+
+file_format: 1

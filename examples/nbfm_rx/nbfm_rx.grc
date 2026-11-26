@@ -1,0 +1,119 @@
+options:
+  parameters: {author: OpenGRV, category: '[GRC Hier Blocks]', description: Narrow-band FM receiver (OpenGRV worked example), generate_options: qt_gui, id: nbfm_rx, output_language: python, title: NBFM
+      receiver}
+  states:
+    coordinate: [16, 12]
+    rotation: 0
+    state: enabled
+blocks:
+- name: samp_rate
+  id: variable
+  parameters: {comment: '', value: 1.92e6}
+  states:
+    coordinate: [200, 12]
+    rotation: 0
+    state: enabled
+- name: audio_rate
+  id: variable
+  parameters: {comment: '', value: 48e3}
+  states:
+    coordinate: [354, 12]
+    rotation: 0
+    state: enabled
+- name: tune
+  id: variable_qtgui_range
+  parameters: {comment: '', gui_hint: '', label: Tuning (Hz), min_len: '200', orient: QtCore.Qt.Horizontal, rangeType: float, start: -400e3, step: 1e3, stop: 400e3, value: 0, widget: counter_slider}
+  states:
+    coordinate: [508, 12]
+    rotation: 0
+    state: enabled
+- name: volume
+  id: variable_qtgui_range
+  parameters: {comment: '', gui_hint: '', label: Volume, min_len: '200', orient: QtCore.Qt.Horizontal, rangeType: float, start: 0, step: 0.05, stop: 2, value: 1, widget: counter_slider}
+  states:
+    coordinate: [662, 12]
+    rotation: 0
+    state: enabled
+- name: adc_iq
+  id: pad_source
+  parameters: {affinity: '', alias: '', comment: '@grv fmt=cs16.15 rate=samp_rate', label: adc_iq, maxoutbuf: '0', minoutbuf: '0', num_streams: '1', optional: 'False', type: complex, vlen: '1'}
+  states:
+    coordinate: [16, 165]
+    rotation: 0
+    state: enabled
+- name: xlate
+  id: freq_xlating_fir_filter_xxx
+  parameters: {affinity: '', alias: '', center_freq: tune, comment: '', decim: '8', maxoutbuf: '0', minoutbuf: '0', samp_rate: samp_rate, taps: 'firdes.low_pass(1, samp_rate, 100e3, 20e3)', type: ccf}
+  states:
+    coordinate: [230, 150]
+    rotation: 0
+    state: enabled
+- name: qdemod
+  id: analog_quadrature_demod_cf
+  parameters: {affinity: '', alias: '', comment: '@grv range=2', gain: (samp_rate / 8) / (2 * math.pi * 5e3), maxoutbuf: '0', minoutbuf: '0'}
+  states:
+    coordinate: [577.6, 165]
+    rotation: 0
+    state: enabled
+- name: lpf
+  id: low_pass_filter
+  parameters: {affinity: '', alias: '', beta: '6.76', comment: '', cutoff_freq: 4e3, decim: '5', gain: '1', interp: '1', maxoutbuf: '0', minoutbuf: '0', samp_rate: samp_rate / 8, type: fir_filter_fff, width: 2e3,
+    win: window.WIN_HAMMING}
+  states:
+    coordinate: [925.2, 150]
+    rotation: 0
+    state: enabled
+- name: vol
+  id: blocks_multiply_const_vxx
+  parameters: {affinity: '', alias: '', comment: '', const: volume, maxoutbuf: '0', minoutbuf: '0', type: float, vlen: '1'}
+  states:
+    coordinate: [1202.4, 165]
+    rotation: 0
+    state: enabled
+- name: audio
+  id: grv_axil_sink
+  parameters: {comment: '', depth: '512', type: float}
+  states:
+    coordinate: [1418.8000000000002, 165]
+    rotation: 0
+    state: enabled
+- name: spectrum
+  id: qtgui_freq_sink_x
+  parameters: {affinity: '', alias: '', average: '1.0', bw: samp_rate, comment: '', fc: '0', fftsize: '1024', grid: 'False', gui_hint: '', label: Relative Gain, name: '""', nconnections: '1', showports: 'False',
+    type: complex, units: dB, update_time: '0.10', wintype: window.WIN_BLACKMAN_hARRIS, ymax: '10', ymin: '-140'}
+  states:
+    coordinate: [230, 296]
+    rotation: 0
+    state: enabled
+- name: mag2
+  id: blocks_complex_to_mag_squared
+  parameters: {affinity: '', alias: '', comment: '', maxoutbuf: '0', minoutbuf: '0', vlen: '1'}
+  states:
+    coordinate: [577.6, 296]
+    rotation: 0
+    state: enabled
+- name: avg
+  id: single_pole_iir_filter_xx
+  parameters: {affinity: '', alias: '', alpha: '0.01', comment: '', maxoutbuf: '0', minoutbuf: '0', type: float, vlen: '1'}
+  states:
+    coordinate: [925.2, 289]
+    rotation: 0
+    state: enabled
+- name: rssi
+  id: blocks_probe_signal_x
+  parameters: {affinity: '', alias: '', comment: '', type: float}
+  states:
+    coordinate: [1202.4, 296]
+    rotation: 0
+    state: enabled
+connections:
+- [adc_iq, '0', xlate, '0']
+- [adc_iq, '0', spectrum, '0']
+- [xlate, '0', qdemod, '0']
+- [xlate, '0', mag2, '0']
+- [qdemod, '0', lpf, '0']
+- [lpf, '0', vol, '0']
+- [vol, '0', audio, '0']
+- [mag2, '0', avg, '0']
+- [avg, '0', rssi, '0']
+metadata: {file_format: 1}

@@ -1,0 +1,85 @@
+{
+ "am_rx_i2s": {
+  "title": "AM receiver with I2S audio",
+  "n": 20000,
+  "desc": "An AM receiver for a complex ADC at 1.92 MS/s: channel selection with a frequency-translating FIR, a second filter to 48 kS/s, envelope detection, DC removal and AGC; the audio goes to an I2S DAC (both channels) and the CPU reads the signal level from a probe.",
+  "params": {
+   "tune": 50000.0
+  },
+  "args": []
+ },
+ "wbfm_rx_i2s": {
+  "title": "Wideband FM receiver with I2S audio",
+  "n": 24000,
+  "desc": "A broadcast FM receiver built from primitive blocks: channel filter to 480 kS/s, quadrature demodulator, 75 us de-emphasis, audio filter and decimation to 48 kS/s, volume and an I2S DAC.",
+  "params": {},
+  "args": []
+ },
+ "qpsk_tx_spi": {
+  "title": "QPSK transmitter to a dual SPI DAC",
+  "n": 2000,
+  "desc": "A QPSK modulator: a PRBS feeds pairs of bits to the constellation mapper, a root-raised-cosine interpolator shapes the symbols (4 samples per symbol), and a dual 12-bit SPI DAC (I on channel A, Q on channel B) plays them at 250 kS/s.",
+  "params": {},
+  "args": []
+ },
+ "bpsk_rx_uart": {
+  "title": "BPSK receiver with a UART data output",
+  "n": 16000,
+  "desc": "A BPSK receiver for a complex ADC at 1 MS/s and 125 kbit/s: root-raised-cosine matched filter, AGC, Costas loop for the carrier, one sample per symbol, slicer, and bytes out on a UART at 921600 Bd. The symbol clock is assumed known (a fixed phase), as in a lab link.",
+  "params": {},
+  "args": []
+ },
+ "spectrum_dma": {
+  "title": "Spectrum analyser with DMA",
+  "n": 6144,
+  "desc": "A 256-point spectrum analyser: one frame in eight of the ADC stream goes through a windowed FFT and a magnitude-squared stage, and a DMA channel writes the power spectra into a ring of buffers in RAM, one frame per buffer, without the CPU.",
+  "params": {},
+  "args": []
+ },
+ "audio_eq_i2s": {
+  "title": "Stereo three-band equaliser between I2S codecs",
+  "n": 4000,
+  "desc": "A stereo three-band equaliser: the codec ADC delivers left and right as one complex stream, two one-pole low-pass filters split it into bass, mid and treble, each band has a runtime gain, and the sum goes to the codec DAC. Both I2S ports are masters at 48 kHz.",
+  "params": {
+   "bass": 1.5,
+   "treble": 0.5
+  },
+  "args": []
+ },
+ "dtmf_gen": {
+  "title": "DTMF generator on a sigma-delta pin and I2S",
+  "n": 600,
+  "desc": "A DTMF tone generator: two oscillators with runtime frequencies (the row and column tones of a key) are summed and scaled, then played on a single pin as a second-order sigma-delta bit stream (an RC filter makes it analogue) and on an I2S DAC.",
+  "params": {
+   "f_row": 852,
+   "f_col": 1477
+  },
+  "args": []
+ },
+ "ddc_cic_dma": {
+  "title": "Digital down-converter with CIC and DMA",
+  "n": 65536,
+  "desc": "A digital down-converter for an ADC at 27 MS/s: a rotator moves the channel to 0 Hz, a four-stage CIC decimates by 32, a compensating FIR by 2 more, and a DMA channel writes the 421.875 kS/s baseband into a ring buffer in RAM. A probe tracks the channel power.",
+  "params": {
+   "tune": 1500000.0
+  },
+  "args": []
+ },
+ "level_meter_spi": {
+  "title": "Level meter: SPI ADC, LED and UART log",
+  "n": 20000,
+  "desc": "An audio level meter: a 12-bit SPI ADC samples at 200 kS/s, DC is removed, the rectified signal is averaged over 1 ms and read 1000 times per second. The level drives an alarm LED through a threshold with hysteresis, is logged as text on a UART and is readable from a probe.",
+  "params": {},
+  "args": []
+ },
+ "siggen_spi_dac": {
+  "title": "Two-channel signal generator",
+  "n": 1500,
+  "desc": "A signal generator: a quadrature oscillator with runtime frequency and level drives a dual SPI DAC (sine and cosine on channels A and B) at 100 kS/s, and a sawtooth drives a PWM pin.",
+  "params": {
+   "freq": 2500,
+   "amp": 0.8
+  },
+  "args": []
+ }
+}
